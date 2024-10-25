@@ -13,6 +13,8 @@ namespace TestAddinWeather
 {
     public partial class Weather
     {
+        private readonly string apiKey = "dcccfefbd932d021573b9a94645ac4f5";
+        private readonly string apiKeyCrypto = "CF4415CB-E39E-4B31-94D1-732434BC56CB";
         private readonly string baseUrlWeather = "http://api.openweathermap.org/data/2.5/forecast";
         private readonly string baseUrlCrypto = "https://rest.coinapi.io/v1/trades/BITSTAMP_SPOT_BTC_USD/history";
 
@@ -25,7 +27,9 @@ namespace TestAddinWeather
             request.AddHeader("X-CoinAPI-Key", apiKey);
             RestResponse response = await client.ExecuteAsync(request);
 
+            string result = response.Content;
 
+            return JObject.Parse(result);
         }
 
         public void InsertCryptoDataToExcel(Excel.Worksheet worksheet, JObject cryptoData)
@@ -48,11 +52,13 @@ namespace TestAddinWeather
             request.AddParameter("lat", lat);
             request.AddParameter("lon", lon);
             request.AddParameter("appid", apiKey);
+            request.AddParameter("units", "metric");
 
             var response = await client.ExecuteAsync(request);
             string result = response.Content;
 
             var json = JObject.Parse(result);
+            return (JArray)json["list"];
         }
 
         public void InsertWeatherDataToExcel(Excel.Worksheet worksheet, JArray weatherData)
@@ -85,6 +91,7 @@ namespace TestAddinWeather
                 }
 
                 Excel.Range usedRange = worksheet.UsedRange;
+                usedRange.AutoFilter(1);
             }
             else
             {
@@ -102,8 +109,9 @@ namespace TestAddinWeather
 
             if (activeWorkSheet != null)
             {
+                double latitude = 50.4501;
                 double longitude = 30.5234;
-
+                //
                 var weatherData = await GetWeatherDataAsync(latitude, longitude);
 
                 InsertWeatherDataToExcel(activeWorkSheet, weatherData);
